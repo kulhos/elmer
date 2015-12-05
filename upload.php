@@ -21,7 +21,7 @@ $in_data = json_decode( $json, true) ;
 #var_dump($json);
 #var_dump($in_data);
 #exit('error');
-date_default_timezone_set('Europe/Prague');
+date_default_timezone_set('UTC');
 
 require 'dibi.phar';
 
