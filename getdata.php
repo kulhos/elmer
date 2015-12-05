@@ -1,14 +1,82 @@
 <?php
 
 require_once("/home/kulhan/creds.php");
+date_default_timezone_set('UTC');
+require 'dibi.phar';
 
-/* Establish the database connection */
-$mysqli = new mysqli($wgDBhost, $wgDBuser, $wgDBpassword, 'netfort_cz');
-
-if ($mysqli->connect_errno) {
-printf("Connect failed: %s\n", $mysqli->connect_error);
-exit();
+try {
+	dibi::connect(array(
+		'driver' => 'mysql',
+		'database' => 'netfort_cz',
+		'host' => $wgDBhost,
+		'username' => $wgDBuser,
+		'password' => $wgDBpassword
+	));
+	// echo 'Connected';
+} catch (DibiException $e) {
+	echo get_class($e), ': ', $e->getMessage(), "\n";
+	exit('Connection failed');
 }
+
+$id = $_GET['i'];
+$date = $_GET['d'];
+
+$sql[] = 'select time,sensor,value,smrz_sensor.type from [smrz_values]';
+array_push($sql, 'join smrz_sensor on 
+	smrz_sensor.id = smrz_values.sensor where');
+
+if ($id) {
+	array_push($sql, 'sensor = %i', $id);
+}
+
+if ($id && $date) {
+	array_push($sql, 'AND');
+}
+if ($date) {
+	array_push($sql, 'date(time) = %d', $date);
+} else {
+	array_push($sql, 'order by date(time) desc limit 2880');
+}
+
+try
+{
+	        $result = dibi::query($sql);
+} catch (Exception $e) {
+	    http_response_code(400);
+	            echo "Connect error";
+	        echo get_class($e), ': ', $e->getMessage(), "\n";
+	        exit('Connection failed');
+}
+$res = $result->fetchAll();
+$rows = array();
+$table = array();
+foreach ($res as $row) {
+        $datetime = $row['time'];
+        $time = strtotime($datetime);
+        #$date = 'Date('. date('Y,n,d,H,i,s',$time).')';
+        $date = 'Date('. date('Y',$time).','.
+                (date('n',$time)-1).','.
+                date('d,H,i,s',$time).')';
+
+        #$rows[] = array( 'time' => $date, 'value' => $row['value']);
+        array_push($rows, array( 'c' => array(
+                array('v' => $date),
+                array('v' => floatval($row['value']))
+        )));
+        #$rows[] = array(
+        #       array('v' => $date),
+        #       array('v' => $row['value']));
+}
+$table['cols'] = array(
+        array('label' => 'Date', 'type' => 'datetime'),
+        array('label' => 'Pulse', 'type' => 'number')
+);
+$table['rows'] = $rows;
+$jsonTable = json_encode($table);
+echo $jsonTable;
+#var_dump($table);
+unset($result);
+exit('ok');
 
 
 $sql = "SELECT time,value FROM smrz_values where sensor =1 order by day(time) desc limit 2880";
@@ -137,8 +205,8 @@ var xmlHttp
 
 $days = $mysqli->query("select distinct date(time) as day from smrz_values");
 while ($row = $days->fetch_assoc()) {
-	$day = strtotime($row['day']);
-	echo "<option value='{$day}'>{$row['day']}</option>\n";
+	$day = $row['day'];
+	echo "<option value='{$day}'>{$day}</option>\n";
 }
 ?>
 </select>
