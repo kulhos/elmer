@@ -1,74 +1,3 @@
-<?php
-
-require_once("/home/kulhan/creds.php");
-
-/* Establish the database connection */
-$mysqli = new mysqli($wgDBhost, $wgDBuser, $wgDBpassword, 'netfort_cz');
-
-if ($mysqli->connect_errno) {
-printf("Connect failed: %s\n", $mysqli->connect_error);
-exit();
-}
-
-
-$sql = "SELECT time,value FROM smrz_values where sensor =1 order by day(time) desc limit 2880";
-$result = $mysqli->query($sql);
-#	$result->close();
-
-$rows = array();
-$table = array();
-
-#$table['cols'] = array(
-#	array('label' => 'Pulses', 'type' => 'number'),
-#	array('label' => 'Time', 'type' => 
-#var_dump($result);
-#$data[0]=array('time','pulses');
-
-#$table['cols'] = array(
-
-#array('label' => 'pulses', 'type' => 'string'),
-#array('label' => 'Percentage', 'type' => 'number')
-#);
-/* Extract the information from $result */
-#date_default_timezone_set('Europe/Prague');
-while ($row = $result->fetch_assoc()) {
-	#var_dump($row);
-	$datetime = $row['time'];
-	$time = strtotime($datetime);
-	#$date = 'Date('. date('Y,n,d,H,i,s',$time).')';
-	$date = 'Date('. date('Y',$time).','.
-		(date('n',$time)-1).','.
-		date('d,H,i,s',$time).')';
-
-	#$rows[] = array( 'time' => $date, 'value' => $row['value']);
-	array_push($rows, array( 'c' => array( 
-		array('v' => $date), 
-		array('v' => floatval($row['value']))
-	)));
-	#$rows[] = array( 
-	#	array('v' => $date), 
-	#	array('v' => $row['value']));
-}
-$table['cols'] = array(
-	array('label' => 'Date', 'type' => 'datetime'),
-	array('label' => 'Pulse', 'type' => 'number')
-);
-$table['rows'] = $rows;
-#$temp = array();
-// The following line will be used to slice the Pie chart
-#$temp[] = array('v' => (string) $r['weekly_task']); 
-// Values of the each slice
-#$temp[] = array('v' => (int) $r['percentage']); 
-#$rows[] = array('c' => $temp);
-#}
-#$table['rows'] = $rows;
-//
-//                                                                                         // convert data into JSON format
-#$jsonTable = json_encode($rows);
-$jsonTable = json_encode($table);
-#echo $jsonTable;
-//
-?>
 <html>
 <head>
 <!--Load the Ajax API-->
@@ -81,6 +10,11 @@ google.load('visualization', '1', {'packages':['corechart']});
 
 // Set a callback to run when the Google Visualization API is loaded.
 google.setOnLoadCallback(drawChartCallback);
+
+function update_divs(date) {
+	drawChart(date);
+	update_numbers(date);
+}
 
 function drawChartCallback() {
 	drawChart();
@@ -95,7 +29,6 @@ function drawChart(date) {
 		url = url + "?d=" + date;
 	}
 
-	console.log(url);
 	var jsonData = $.ajax({
 		// url: "getdata.php",
 		url: url,
@@ -103,17 +36,6 @@ function drawChart(date) {
 			async: false
 	}).responseText;
 	var data = new google.visualization.DataTable(jsonData);
-	/*
-		data.addColumn("datetime","Date");
-	data.addColumn("number","Pulses");
-
-	//alert(JSON.parse(<?=$jsonTable?>));
-	var js = JSON.parse(<?=$jsonTable?>);
-	data.addRows(js);
-	//data.addRows(<?php echo $jsonTable?>);
-
-	 */
-
 	var options = {
 		title: 'Smrzovka',
 			seriesType: "line",
@@ -135,13 +57,6 @@ function drawChart(date) {
 	var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
 	chart.draw(data, options);
 }
-/*function update_graph(date)
-{
-	drawChart(date);
-}
- */
-</script>
-<script>
 function update_graph(date)
 {
 	var xmlhttp;
@@ -159,21 +74,50 @@ xmlhttp.send();
 }
 </script>
 </head>
+<script>
+function update_numbers(date) {
+	console.log("nums");
+	var jsonData = $.ajax({
+		type: "GET",
+		url: "getnumbers.php",
+		data: "d=" + date,
+		dataType: "json",
+		async: false
+	}).responseText;
 
+	$("div.numbers_div").html(jsonData);
+}
+</script>
 <body>
-<select name="date" id="drop" onchange="update_graph(this.value);">
+<select name="date" id="drop" onchange="update_divs(this.value);">
 <?php
+
+require_once("/home/kulhan/creds.php");
+
+/* Establish the database connection */
+$mysqli = new mysqli($wgDBhost, $wgDBuser, $wgDBpassword, 'netfort_cz');
+
+if ($mysqli->connect_errno) {
+printf("Connect failed: %s\n", $mysqli->connect_error);
+exit();
+}
 
 $days = $mysqli->query("select distinct date(time) as day from smrz_values order by date(time) desc");
 while ($row = $days->fetch_assoc()) {
 	$day = strtotime($row['day']);
 	echo "<option value='{$day}'>{$row['day']}</option>\n";
 }
+mysqli_close($mysqli);
 ?>
 </select>
 
 
 <!--this is the div that will hold the pie chart-->
 <div id="chart_div" style="width: 90%; height: 80%;"></div>
+<div class="numbers_div"></div>
+<script>
+console.log("xx");
+update_numbers();
+</script>
 </body>
 </html>

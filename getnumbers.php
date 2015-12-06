@@ -18,54 +18,32 @@ try {
 	exit('Connection failed');
 }
 
-$rows = array();
-$table['cols'] = array(
-        array('label' => 'Date', 'type' => 'datetime'),
-);
-
-$r1 = dibi::query("select id,name,type from smrz_sensor");
-$sensors = $r1->fetchAssoc('id');
-$scnt = 1;
-$empty_vals = array();
-foreach($sensors as $sensor) {
-	array_push($table['cols'],
-		array('label' => $sensor['name'], 'type' => 'number'));
-	$sensors[$sensor['id']]['cnt']=$scnt;
-	$empty_vals[$scnt]=NULL;
-	$scnt++;
-}
-$numvals = count($sensors) +1;
-#var_dump($sensors);
-
-$id = $_GET['i'];
 $date = $_GET['d'];
-
-if ( ! $date) 
+if ( ! $date)
 	$date = time();
-
-$sql[] = 'select time,sensor,value,smrz_sensor.type from [smrz_values]';
-array_push($sql, 'join smrz_sensor on 
-	smrz_sensor.id = smrz_values.sensor where');
-
-if ($id) {
-	array_push($sql, 'sensor = %i and', $id);
-}
-
-array_push($sql, 'date(time) = %d', $date);
+$date = isset($_GET['d']) ? $_GET['d'] : time();
+$result["date"] = $date;
+$result["time"] = time();
 
 try
 {
-	        $result = dibi::query($sql);
+	$total = dibi::fetchSingle("select sum(value)/coef 
+		from smrz_sensor_values 
+		where sensor=1");
+	$today = dibi::fetchSingle("select sum(value)/coef 
+		from smrz_sensor_values 
+		where sensor=1 and date(time)=curdate()");
+	$selday = dibi::fetchSingle("select sum(value)/coef 
+	 	from smrz_sensor_values 
+	 	where sensor=1 and date(time) = %d", $date);
 } catch (Exception $e) {
 	    http_response_code(400);
 	            echo "Connect error";
 	        echo get_class($e), ': ', $e->getMessage(), "\n";
 	        exit('Connection failed');
 }
-$res = $result->fetchAll();
-$tmpres = array();
-
-foreach ($res as $row) {
+/*
+ * oreach ($res as $row) {
         $datetime = $row['time'];
         $time = strtotime($datetime);
         #$date = 'Date('. date('Y,n,d,H,i,s',$time).')';
@@ -92,21 +70,17 @@ foreach ($res as $row) {
                 array('v' => $date),
                 array('v' => floatval($row['value']))
 	)));
-	 */
         #$rows[] = array(
         #       array('v' => $date),
         #       array('v' => $row['value']));
 }
-// $table['rows'] = array(array_values($tmpres));
-foreach ($tmpres as $date=>$val) {
- 	$table['rows'][] = $val;
-}
-// $table['rows'] = $tmpres;
-//var_dump($table);
-$jsonTable = json_encode($table, JSON_PRETTY_PRINT);
+ */
+$result["elTotal"] = $total;
+$result["today"] = $today;
+$result["sel. date"] = $selday;
+$jsonTable = json_encode($result, JSON_PRETTY_PRINT);
 echo $jsonTable;
 #var_dump($table);
-unset($result);
 exit();
 
 ?>
