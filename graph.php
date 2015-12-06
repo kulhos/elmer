@@ -80,15 +80,31 @@ $jsonTable = json_encode($table);
 google.load('visualization', '1', {'packages':['corechart']});
 
 // Set a callback to run when the Google Visualization API is loaded.
-google.setOnLoadCallback(drawChart);
+google.setOnLoadCallback(drawChartCallback);
 
-function drawChart() {
+function drawChartCallback() {
+	drawChart();
+}
+
+function drawChart(date) {
 
 	// Create our data table out of JSON data loaded from server.
-	//var data = new google.visualization.DataTable(<?=$jsonTable?>);
-	var data = new google.visualization.DataTable(<?=$jsonTable?>);
+	//////var data = new google.visualization.DataTable(<?=$jsonTable?>);
+	var url = "getdata.php";
+	if (date !== undefined) {
+		url = url + "?d=" + date;
+	}
+
+	console.log(url);
+	var jsonData = $.ajax({
+		// url: "getdata.php",
+		url: url,
+			dataType: "json",
+			async: false
+	}).responseText;
+	var data = new google.visualization.DataTable(jsonData);
 	/*
-	data.addColumn("datetime","Date");
+		data.addColumn("datetime","Date");
 	data.addColumn("number","Pulses");
 
 	//alert(JSON.parse(<?=$jsonTable?>));
@@ -99,35 +115,48 @@ function drawChart() {
 	 */
 
 	var options = {
-		title: 'My Weekly Plan',
-			is3D: 'true',
-			width: 800,
-			height: 600
-	};
-	// Instantiate and draw our chart, passing in some options.
-// Do not forget to check your div ID
-var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
-chart.draw(data, options);
+		title: 'Smrzovka',
+			seriesType: "line",
+			series: {
+				0:{ 
+					type: 'bars',
+					targetAxisIndex:1
+				},
+				vAxes: [ { title: 'Teplota'},
+					{ title: 'Pulses'}
+				]
+			}
+// is3D: 'true',
+// width: 800,
+// height: 600
+			};
+		// Instantiate and draw our chart, passing in some options.
+	// Do not forget to check your div ID
+	var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
+	chart.draw(data, options);
 }
+/*function update_graph(date)
+{
+	drawChart(date);
+}
+ */
 </script>
 <script>
-var xmlHttp
-	function update_graph(date)
+function update_graph(date)
+{
+	var xmlhttp;
+	xmlhttp=new XMLHttpRequest();
+	xmlhttp.onreadystatechange=function()
+{
+	if (xmlhttp.readyState==4 && xmlhttp.status==200)
 	{
-		alert(date);
-		xmlhttp=new XMLHttpRequest();
-		xmlhttp.onreadystatechange=function()
-	{
-		if (xmlhttp.readyState==4 && xmlhttp.status==200)
-		{
-			alert(xmlhhtp.responseText);
-			drawchart2();
-		}
+		drawChart(date);
 	}
+}
 
-		xmlhttp.open("GET","graph.php?q="+date, true);
-		xmlhttp.send();
-	}
+xmlhttp.open("GET","graph.php?q="+date, true);
+xmlhttp.send();
+}
 </script>
 </head>
 
@@ -135,7 +164,7 @@ var xmlHttp
 <select name="date" id="drop" onchange="update_graph(this.value);">
 <?php
 
-$days = $mysqli->query("select distinct date(time) as day from smrz_values");
+$days = $mysqli->query("select distinct date(time) as day from smrz_values order by date(time) desc");
 while ($row = $days->fetch_assoc()) {
 	$day = strtotime($row['day']);
 	echo "<option value='{$day}'>{$row['day']}</option>\n";
@@ -145,6 +174,6 @@ while ($row = $days->fetch_assoc()) {
 
 
 <!--this is the div that will hold the pie chart-->
-<div id="chart_div"></div>
+<div id="chart_div" style="width: 90%; height: 80%;"></div>
 </body>
 </html>
