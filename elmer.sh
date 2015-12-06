@@ -1,5 +1,4 @@
 #!/bin/sh
-
 ### BEGIN INIT INFO
 # Provides:          elmer
 # Required-Start:    $remote_fs $syslog $local_fs
