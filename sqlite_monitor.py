@@ -56,7 +56,7 @@ def impulseCount(channel):
         counter = 0
 
     counter+=1
-    print time.ctime(now), ": ", counter
+    #print time.ctime(now), ": ", counter
     #history[time] += 1
     #db.insert(time.time(), "s0", counter)
     #history[time.time()] = counter

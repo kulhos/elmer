@@ -12,7 +12,7 @@ URL = "http://www.netfort.cz/smrz/elmer/upload.php";
 INTERVAL=30
 
 def upload(rec):
-    print "upload"
+    #print "upload"
     s = json.dumps(rec)
     print s
     #print hist_copy
