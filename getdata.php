@@ -1,22 +1,6 @@
 <?php
 
-require_once("/home/kulhan/creds.php");
-date_default_timezone_set('UTC');
-require 'dibi.phar';
-
-try {
-	dibi::connect(array(
-		'driver' => 'mysql',
-		'database' => 'netfort_cz',
-		'host' => $wgDBhost,
-		'username' => $wgDBuser,
-		'password' => $wgDBpassword
-	));
-	// echo 'Connected';
-} catch (DibiException $e) {
-	echo get_class($e), ': ', $e->getMessage(), "\n";
-	exit('Connection failed');
-}
+require_once "dbconnect.php";
 
 $rows = array();
 $table['cols'] = array(
