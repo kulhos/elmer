@@ -1,26 +1,19 @@
-<?php
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+	<meta charset="UTF-8">
+	<title>Title</title>
+</head>
+<body>
+
+	<?php
 $id = $_GET['id'];
 $time = $_GET['time'];
 $v = $_GET['v'];
 $missing = $_GET['missing'];
 
 date_default_timezone_set('UTC');
-require_once("/home/kulhan/creds.php");
-require 'dibi.php';
-
-try {
- dibi::connect(array(
-  'driver' => 'mysql',
-  'database' => 'netfort_cz',
-  'host' => $wgDBhost,
-  'username' => $wgDBuser,
-  'password' => $wgDBpassword
-   ));
-   // echo 'Connected';
-} catch (DibiException $e) {
-    echo get_class($e), ': ', $e->getMessage(), "\n";
-    exit('Connection failed'); 
-}
+require_once("dbconnect.php");
 
 #echo "Temp: ", $v;
 #echo "Id: ", $id;
@@ -40,6 +33,8 @@ $rec = array(
 	"value" => round($v,1)
 );
 
+// print_r($rec);
+
 #$value = $res->fetch();
 #exit('Connection failed');
 #
@@ -56,3 +51,5 @@ try
 
 echo 'OK';
 ?>
+</body>
+</html>

@@ -29,6 +29,7 @@ function drawChart(date) {
 		url = url + "?d=" + date;
 	}
 
+	console.log(url);
 	var jsonData = $.ajax({
 		// url: "getdata.php",
 		url: url,
@@ -62,25 +63,29 @@ function update_graph(date)
 	var xmlhttp;
 	xmlhttp=new XMLHttpRequest();
 	xmlhttp.onreadystatechange=function()
-{
-	if (xmlhttp.readyState==4 && xmlhttp.status==200)
 	{
-		drawChart(date);
+		if (xmlhttp.readyState==4 && xmlhttp.status==200)
+		{
+			drawChart(date);
+		}
 	}
-}
 
-xmlhttp.open("GET","graph.php?q="+date, true);
-xmlhttp.send();
+	xmlhttp.open("GET","graph.php?q="+date, true);
+	xmlhttp.send();
 }
 </script>
 </head>
 <script>
 function update_numbers(date) {
 	console.log("nums");
+
+	var url = "getnumbers.php";
+	if (date !== undefined) {
+		url = url + "?d=" + date;
+	}
 	var jsonData = $.ajax({
 		type: "GET",
-		url: "getnumbers.php",
-		data: "d=" + date,
+		url: url,
 		dataType: "json",
 		async: false
 	}).responseText;
@@ -89,25 +94,24 @@ function update_numbers(date) {
 }
 </script>
 <body>
+<form>
 <select name="date" id="drop" onchange="update_divs(this.value);">
+</form>
 <?php
 
-require_once("/home/kulhan/creds.php");
+require_once "dbconnect.php";
 
-/* Establish the database connection */
-$mysqli = new mysqli($wgDBhost, $wgDBuser, $wgDBpassword, 'netfort_cz');
-
-if ($mysqli->connect_errno) {
-printf("Connect failed: %s\n", $mysqli->connect_error);
-exit();
+$res = dibi::query("select distinct date(time) as day from smrz_values order by date(time) desc");
+$days = $res->fetchAll();
+//print_r($days);
+foreach ($days as $row) {
+	// $day = strtotime($row['day']);
+	$unix = $row['day']->getTimestamp();
+	$day = date_format($row['day'], "Y-m-d");
+	echo "<option value='{$unix}'>{$day}</option>\n";
+	// echo "<option value='{$day}'>{$row['day']}</option>\n";
 }
-
-$days = $mysqli->query("select distinct date(time) as day from smrz_values order by date(time) desc");
-while ($row = $days->fetch_assoc()) {
-	$day = strtotime($row['day']);
-	echo "<option value='{$day}'>{$row['day']}</option>\n";
-}
-mysqli_close($mysqli);
+unset($res);
 ?>
 </select>
 
