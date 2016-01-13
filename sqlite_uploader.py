@@ -69,6 +69,8 @@ try:
             continue
 
         tstamp,sensor,value = row
+        if value == "":
+            value = 0
         #print row
         #rec = {'timestamp':row[0], 'event':row[1], 'value':row[2]}
         rec = {'timestamp':tstamp, 'sensor':sensor, 'value':value}
