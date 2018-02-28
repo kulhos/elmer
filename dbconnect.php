@@ -12,7 +12,7 @@ require 'dibi.phar';
 
 try {
     dibi::connect(array(
-        'driver' => 'mysql',
+        'driver' => 'mysqli',
         'database' => 'netfort_cz',
         'host' => $wgDBhost,
         'username' => $wgDBuser,
